@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-Minute Vocabulary Interactive Worksheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .drag-hover { border-color: #6366f1 !important; background-color: #eef2ff !important; }
+        .matched-item { transition: all 0.3s ease; }
+        @keyframes pulse-red {
+            0%, 100% { color: #ef4444; transform: scale(1); }
+            50% { color: #dc2626; transform: scale(1.05); }
+        }
+        .urgent-timer { animation: pulse-red 0.8s infinite; }
+        .glossy-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        @media print {
+            header, .timer-bar, .no-print, #startBtn, #pauseBtn, #resetBtn, #teacherKeyBox, #resultsModal, .action-buttons {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .print-header {
+                display: block !important;
+                border-bottom: 2px solid #000;
+                padding-bottom: 12px;
+                margin-bottom: 20px;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .word-card, .def-card, .p-4 {
+                border: 1px solid #94a3b8 !important;
+                background: #fff !important;
+                box-shadow: none !important;
+            }
+            select {
+                border-bottom: 2px solid #000 !important;
+                border-radius: 0 !important;
+                padding: 0 10px !important;
+                appearance: none;
+                -webkit-appearance: none;
+            }
+        }
+        .print-header { display: none; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <div class="print-header max-w-4xl mx-auto w-full pt-4">
+        <div class="flex justify-between items-end mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900">Do Now: 3-Minute Vocabulary Match & Apply</h1>
+                <p class="text-sm text-slate-600">Target Words: Derive, Synthesize, Formulate</p>
+            </div>
+            <div class="text-right text-sm space-y-1">
+                <p><strong>Name:</strong> ___________________________</p>
+                <p><strong>Date:</strong> ____________ <strong>Period:</strong> ______</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header & Timer Bar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-brain text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">Do Now: Vocabulary Builder</h1>
+                    <p class="text-xs text-slate-500 font-medium">Target Words: <span class="font-semibold text-indigo-600">Derive, Synthesize, Formulate</span></p>
+                </div>
+            </div>
+
+            <!-- Timer Box -->
+            <div class="flex items-center gap-4 bg-slate-50 border border-slate-200 px-4 py-2 rounded-2xl shadow-inner">
+                <div class="text-center">
+                    <span class="text-xs uppercase tracking-wider text-slate-400 font-bold block">Time Left</span>
+                    <span id="timerDisplay" class="text-2xl font-black font-mono text-slate-800">03:00</span>
+                </div>
+                <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
+                    <button id="startBtn" onclick="startTimer()" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl transition shadow-sm font-medium text-xs flex items-center gap-1.5" title="Start Timer">
+                        <i class="fa-solid fa-play"></i> Start
+                    </button>
+                    <button id="pauseBtn" onclick="pauseTimer()" class="hidden bg-amber-500 hover:bg-amber-600 text-white p-2.5 rounded-xl transition shadow-sm font-medium text-xs" title="Pause Timer">
+                        <i class="fa-solid fa-pause"></i>
+                    </button>
+                    <button id="resetBtn" onclick="resetActivity()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 p-2.5 rounded-xl transition font-medium text-xs" title="Reset Activity">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="text-xs text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 font-semibold px-3 py-2 rounded-lg border border-slate-300 transition flex items-center gap-1.5" title="Download or Print PDF">
+                    <i class="fa-solid fa-file-pdf text-red-600"></i> Print / PDF
+                </button>
+                <button onclick="promptTeacherKey()" class="text-xs text-slate-500 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 font-semibold px-2.5 py-2 rounded-lg border border-slate-200 transition flex items-center gap-1.5" title="Teacher Access Only">
+                    <i class="fa-solid fa-lock text-slate-400"></i> <span id="keyBtnText">Teacher Access</span>
+                </button>
+            </div>
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-full bg-slate-200 h-1.5">
+            <div id="timerProgress" class="bg-indigo-600 h-1.5 transition-all duration-1000 w-full"></div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+        <!-- Student Info Bar (for submission & PDF output) -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col sm:flex-row gap-4 items-center justify-between no-print">
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <i class="fa-solid fa-user-graduate text-indigo-600"></i>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Student Info:</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full sm:w-auto flex-1">
+                <input type="text" id="studentName" placeholder="Your Name (e.g. Alex Smith)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <input type="text" id="classPeriod" placeholder="Class / Period (e.g. Period 3)" class="px-3 py-1.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+        </div>
+
+        <!-- Intro Banner -->
+        <div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl p-4 text-white shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 no-print">
+            <div class="space-y-1">
+                <div class="inline-block bg-white/20 px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide">3-Minute Challenge</div>
+                <h2 class="text-xl font-bold">Vocabulary Warm-up</h2>
+                <p class="text-sm text-indigo-100">Click or drag words to match their definitions and complete the sentences before the clock runs out!</p>
+            </div>
+            <div class="flex gap-2 self-stretch md:self-auto justify-end">
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 text-center min-w-[75px]">
+                    <span class="block text-xs text-indigo-200">Part 1</span>
+                    <span class="text-sm font-bold">60 Sec</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-md rounded-xl p-2.5 text-center min-w-[75px]">
+                    <span class="block text-xs text-indigo-200">Part 2</span>
+                    <span class="text-sm font-bold">2 Min</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Answer Key Box (PIN-Protected, Hidden from students) -->
+        <div id="teacherKeyBox" class="hidden bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 shadow-sm text-slate-800 space-y-2 no-print">
+            <div class="flex items-center justify-between border-b border-amber-200 pb-2">
+                <span class="font-bold text-amber-900 flex items-center gap-2"><i class="fa-solid fa-chalkboard-user"></i> Teacher Quick Reference</span>
+                <button onclick="toggleTeacherKey()" class="text-xs bg-amber-200 hover:bg-amber-300 text-amber-900 px-2 py-1 rounded font-bold">Hide Key</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                    <span class="font-semibold text-slate-700 block mb-1">Part 1 Matches:</span>
+                    <ul class="list-disc list-inside space-y-0.5 text-slate-600">
+                        <li><strong>Derive:</strong> B. To obtain, trace, or reach...</li>
+                        <li><strong>Synthesize:</strong> C. To combine multiple elements...</li>
+                        <li><strong>Formulate:</strong> A. To create, devise, or express...</li>
+                    </ul>
+                </div>
+                <div>
+                    <span class="font-semibold text-slate-700 block mb-1">Part 2 Blanks:</span>
+                    <ol class="list-decimal list-inside space-y-0.5 text-slate-600">
+                        <li><strong>formulate</strong> a clear hypothesis</li>
+                        <li><strong>derive</strong> useful medicines</li>
+                        <li><strong>synthesize</strong> information</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- PART 1: Quick Match -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2.5 py-1 rounded-lg">Part 1</span>
+                    <h3 class="font-bold text-slate-800 text-base">Quick Definition Match <span class="text-xs font-normal text-slate-500">(Target: 60 Seconds)</span></h3>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="togglePart1Hints()" class="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1" title="Toggle Memory Hints">
+                        <i class="fa-solid fa-lightbulb text-amber-500"></i> Hints
+                    </button>
+                    <button onclick="verifyPart1Matches()" class="text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1" title="Check Current Matches">
+                        <i class="fa-solid fa-list-check"></i> Verify Matches
+                    </button>
+                </div>
+            </div>
+
+            <!-- Part 1 Hints Box (Collapsible) -->
+            <div id="part1HintBox" class="hidden bg-amber-50/90 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 space-y-1.5">
+                <div class="font-bold flex items-center gap-1.5 text-amber-800">
+                    <i class="fa-solid fa-lightbulb"></i> Word Memory Clues:
+                </div>
+                <ul class="list-disc list-inside space-y-1 text-amber-900/90">
+                    <li><strong>Derive:</strong> Think "drawing out" or extracting something from a root source (e.g. water from a well, or root words).</li>
+                    <li><strong>Synthesize:</strong> Think "combining" separate ingredients to make a brand new whole (e.g. photosynthesis, chemical synthesis).</li>
+                    <li><strong>Formulate:</strong> Think "formula" or structured plan — creating an idea or solution systematically.</li>
+                </ul>
+            </div>
+
+            <!-- Words Bank (Select / Drag source) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <!-- Word Items -->
+                <div id="word-derive" onclick="selectWord('derive')" class="word-card border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-400 p-3 rounded-xl cursor-pointer transition font-bold text-indigo-900 text-center select-none shadow-sm flex items-center justify-center gap-2">
+                    <span>Derive</span>
+                    <i id="icon-derive" class="fa-regular fa-circle text-indigo-400"></i>
+                </div>
+                <div id="word-synthesize" onclick="selectWord('synthesize')" class="word-card border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-400 p-3 rounded-xl cursor-pointer transition font-bold text-indigo-900 text-center select-none shadow-sm flex items-center justify-center gap-2">
+                    <span>Synthesize</span>
+                    <i id="icon-synthesize" class="fa-regular fa-circle text-indigo-400"></i>
+                </div>
+                <div id="word-formulate" onclick="selectWord('formulate')" class="word-card border-2 border-indigo-200 bg-indigo-50/50 hover:bg-indigo-100 hover:border-indigo-400 p-3 rounded-xl cursor-pointer transition font-bold text-indigo-900 text-center select-none shadow-sm flex items-center justify-center gap-2">
+                    <span>Formulate</span>
+                    <i id="icon-formulate" class="fa-regular fa-circle text-indigo-400"></i>
+                </div>
+            </div>
+
+            <!-- Definitions Drop List -->
+            <div class="space-y-3 pt-2">
+                <!-- Definition A -->
+                <div id="def-A" onclick="matchDefinition('A')" class="def-card border-2 border-slate-200 hover:border-indigo-300 bg-slate-50/70 p-4 rounded-xl cursor-pointer transition flex items-start gap-3 select-none">
+                    <span class="font-bold text-slate-500 bg-white border border-slate-200 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-sm">A</span>
+                    <div class="flex-1">
+                        <p class="text-sm text-slate-700">To create, devise, or express a strategy, plan, or idea systematically.</p>
+                        <div id="slot-A" class="mt-2 hidden">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md bg-indigo-600 text-white">
+                                <span class="slot-word">Matched Word</span>
+                                <i class="fa-solid fa-xmark cursor-pointer hover:text-indigo-200" onclick="clearMatch('A', event)"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Definition B -->
+                <div id="def-B" onclick="matchDefinition('B')" class="def-card border-2 border-slate-200 hover:border-indigo-300 bg-slate-50/70 p-4 rounded-xl cursor-pointer transition flex items-start gap-3 select-none">
+                    <span class="font-bold text-slate-500 bg-white border border-slate-200 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-sm">B</span>
+                    <div class="flex-1">
+                        <p class="text-sm text-slate-700">To obtain, trace, or reach a conclusion from a specific source or origin.</p>
+                        <div id="slot-B" class="mt-2 hidden">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md bg-indigo-600 text-white">
+                                <span class="slot-word">Matched Word</span>
+                                <i class="fa-solid fa-xmark cursor-pointer hover:text-indigo-200" onclick="clearMatch('B', event)"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Definition C -->
+                <div id="def-C" onclick="matchDefinition('C')" class="def-card border-2 border-slate-200 hover:border-indigo-300 bg-slate-50/70 p-4 rounded-xl cursor-pointer transition flex items-start gap-3 select-none">
+                    <span class="font-bold text-slate-500 bg-white border border-slate-200 w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-sm">C</span>
+                    <div class="flex-1">
+                        <p class="text-sm text-slate-700">To combine multiple elements or ideas into a single, cohesive whole.</p>
+                        <div id="slot-C" class="mt-2 hidden">
+                            <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-md bg-indigo-600 text-white">
+                                <span class="slot-word">Matched Word</span>
+                                <i class="fa-solid fa-xmark cursor-pointer hover:text-indigo-200" onclick="clearMatch('C', event)"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART 2: Context Fill-in-the-Blank -->
+        <section class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-2.5 py-1 rounded-lg">Part 2</span>
+                    <h3 class="font-bold text-slate-800 text-base">Context Fill-in-the-Blank <span class="text-xs font-normal text-slate-500">(Target: 2 Minutes)</span></h3>
+                </div>
+                <span class="text-xs text-slate-400">Select & check your answers per sentence</span>
+            </div>
+
+            <!-- Sentences List -->
+            <div class="space-y-4 text-sm leading-relaxed text-slate-700">
+                <!-- Question 1 -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
+                        <div class="flex items-start gap-2 flex-1">
+                            <span class="font-bold text-slate-500">1.</span>
+                            <p class="leading-loose">
+                                Before launching the experiment, the team needed to
+                                <select id="blank-1" onchange="updateProgressCheck()" class="mx-1 bg-white border-2 border-slate-300 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-1 font-semibold text-indigo-700 transition outline-none cursor-pointer">
+                                    <option value="" disabled selected>-- Select Word --</option>
+                                    <option value="derive">derive</option>
+                                    <option value="synthesize">synthesize</option>
+                                    <option value="formulate">formulate</option>
+                                </select>
+                                a clear hypothesis based on their research.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 self-end sm:self-start shrink-0">
+                            <button onclick="toggleSentenceHint(1)" class="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Get Hint">
+                                <i class="fa-solid fa-lightbulb text-amber-500"></i> Hint
+                            </button>
+                            <button onclick="verifySentence(1)" class="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Verify Answer">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> Verify
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hint-1" class="hidden text-xs bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-amber-900">
+                        💡 <strong>Hint:</strong> Which word means to <em>devise or create a plan or hypothesis systematically</em>?
+                    </div>
+                    <div id="feedback-1" class="text-xs font-semibold pl-6 hidden"></div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
+                        <div class="flex items-start gap-2 flex-1">
+                            <span class="font-bold text-slate-500">2.</span>
+                            <p class="leading-loose">
+                                Scientists can
+                                <select id="blank-2" onchange="updateProgressCheck()" class="mx-1 bg-white border-2 border-slate-300 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-1 font-semibold text-indigo-700 transition outline-none cursor-pointer">
+                                    <option value="" disabled selected>-- Select Word --</option>
+                                    <option value="derive">derive</option>
+                                    <option value="synthesize">synthesize</option>
+                                    <option value="formulate">formulate</option>
+                                </select>
+                                useful medicines from compounds found in rare tropical plants.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 self-end sm:self-start shrink-0">
+                            <button onclick="toggleSentenceHint(2)" class="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Get Hint">
+                                <i class="fa-solid fa-lightbulb text-amber-500"></i> Hint
+                            </button>
+                            <button onclick="verifySentence(2)" class="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Verify Answer">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> Verify
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hint-2" class="hidden text-xs bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-amber-900">
+                        💡 <strong>Hint:</strong> Which word means to <em>obtain or extract something from an original source</em>?
+                    </div>
+                    <div id="feedback-2" class="text-xs font-semibold pl-6 hidden"></div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div class="flex items-start justify-between gap-2 flex-wrap sm:flex-nowrap">
+                        <div class="flex items-start gap-2 flex-1">
+                            <span class="font-bold text-slate-500">3.</span>
+                            <p class="leading-loose">
+                                To write a strong conclusion, you must
+                                <select id="blank-3" onchange="updateProgressCheck()" class="mx-1 bg-white border-2 border-slate-300 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-1 font-semibold text-indigo-700 transition outline-none cursor-pointer">
+                                    <option value="" disabled selected>-- Select Word --</option>
+                                    <option value="derive">derive</option>
+                                    <option value="synthesize">synthesize</option>
+                                    <option value="formulate">formulate</option>
+                                </select>
+                                information from all three articles into a single argument.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-1.5 self-end sm:self-start shrink-0">
+                            <button onclick="toggleSentenceHint(3)" class="text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Get Hint">
+                                <i class="fa-solid fa-lightbulb text-amber-500"></i> Hint
+                            </button>
+                            <button onclick="verifySentence(3)" class="text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1" title="Verify Answer">
+                                <i class="fa-solid fa-circle-check text-emerald-600"></i> Verify
+                            </button>
+                        </div>
+                    </div>
+                    <div id="hint-3" class="hidden text-xs bg-amber-50 border border-amber-200 p-2.5 rounded-lg text-amber-900">
+                        💡 <strong>Hint:</strong> Which word means to <em>combine multiple separate elements into one unified whole</em>?
+                    </div>
+                    <div id="feedback-3" class="text-xs font-semibold pl-6 hidden"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Submit & Control Bar -->
+        <div class="flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-200 no-print flex-wrap gap-3">
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="resetActivity()" class="text-sm font-semibold text-slate-500 hover:text-slate-700 px-3 py-2 rounded-xl transition hover:bg-slate-100">
+                    <i class="fa-solid fa-rotate-left mr-1.5"></i> Clear Responses
+                </button>
+                <div class="text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-info text-indigo-500"></i>
+                    <span id="progressCheckText">Completed: 0 / 6</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold px-4 py-2.5 rounded-xl transition flex items-center gap-2 text-sm shadow-sm">
+                    <i class="fa-solid fa-file-pdf text-red-600"></i> Save PDF / Print
+                </button>
+                <button onclick="checkAnswers()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition transform active:scale-95 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-paper-plane"></i> Submit & Grade
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Results Modal -->
+    <div id="resultsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in duration-200">
+            <div class="text-center space-y-2">
+                <div id="scoreBadge" class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto text-3xl font-black shadow-inner">
+                    6/6
+                </div>
+                <h3 id="resultTitle" class="text-2xl font-extrabold text-slate-900">Great Job!</h3>
+                <p id="studentDisplayTag" class="text-xs font-semibold text-indigo-600"></p>
+                <p id="resultSubtitle" class="text-sm text-slate-500">You completed the worksheet in <span id="timeTakenText" class="font-semibold text-slate-700">01:45</span></p>
+            </div>
+
+            <!-- Score Summary Cards -->
+            <div class="grid grid-cols-2 gap-3 text-center">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <span class="block text-xs font-semibold text-slate-400 uppercase">Matching</span>
+                    <span id="matchingScore" class="text-lg font-bold text-slate-800">3 / 3</span>
+                </div>
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <span class="block text-xs font-semibold text-slate-400 uppercase">Context Sentences</span>
+                    <span id="contextScore" class="text-lg font-bold text-slate-800">3 / 3</span>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3 text-xs text-indigo-800 space-y-1">
+                <div class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-lightbulb"></i> Quick Memory Tip</div>
+                <p id="tipText"><strong>Synthesize</strong> = Put together | <strong>Derive</strong> = Take out/extract | <strong>Formulate</strong> = Plan/create</p>
+            </div>
+
+            <div class="space-y-2 pt-1">
+                <button onclick="window.print()" class="w-full bg-emerald-600 hover:bg-emerald-700 font-bold py-3 rounded-xl text-white shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-file-arrow-down"></i> Print / Save PDF Completion Proof
+                </button>
+            </div>
+
+            <div class="flex gap-3 pt-1">
+                <button onclick="closeModal()" class="flex-1 border border-slate-300 hover:bg-slate-50 font-semibold py-2.5 rounded-xl text-slate-700 transition text-sm">
+                    Review Answers
+                </button>
+                <button onclick="resetActivity(); closeModal();" class="flex-1 bg-slate-100 hover:bg-slate-200 font-bold py-2.5 rounded-xl text-slate-800 transition text-sm">
+                    Try Again
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        // Part 1 Hints & Verification Helpers
+        function togglePart1Hints() {
+            const hintBox = document.getElementById('part1HintBox');
+            hintBox.classList.toggle('hidden');
+        }
+
+        function verifyPart1Matches() {
+            let matchedCount = 0;
+            let correctCount = 0;
+
+            Object.keys(matches).forEach(slot => {
+                if (matches[slot]) {
+                    matchedCount++;
+                    const card = document.getElementById(`def-${slot}`);
+                    if (matches[slot] === correctMatches[slot]) {
+                        correctCount++;
+                        card.classList.remove('border-slate-200', 'border-red-300');
+                        card.classList.add('border-emerald-400', 'bg-emerald-50/50');
+                    } else {
+                        card.classList.remove('border-slate-200', 'border-emerald-400');
+                        card.classList.add('border-red-300', 'bg-red-50/50');
+                    }
+                }
+            });
+
+            if (matchedCount === 0) {
+                alert("No matches made yet! Click a target word and assign it to a definition slot first.");
+            } else {
+                playSound('match');
+            }
+            updateProgressCheck();
+        }
+
+        // Part 2 Sentence Hints & Verification
+        function toggleSentenceHint(qNum) {
+            const hintEl = document.getElementById(`hint-${qNum}`);
+            if (hintEl) hintEl.classList.toggle('hidden');
+        }
+
+        function verifySentence(qNum) {
+            const selectEl = document.getElementById(`blank-${qNum}`);
+            const feedbackEl = document.getElementById(`feedback-${qNum}`);
+
+            if (!selectEl.value) {
+                alert(`Please select an answer for question ${qNum} first!`);
+                return;
+            }
+
+            feedbackEl.classList.remove('hidden');
+            const targetAnswer = correctBlanks[`blank-${qNum}`];
+
+            if (selectEl.value === targetAnswer) {
+                selectEl.classList.remove('border-slate-300', 'border-red-400');
+                selectEl.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-800');
+                feedbackEl.className = "text-xs font-semibold pl-6 text-emerald-600 flex items-center gap-1 mt-1";
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Correct choice!`;
+                playSound('match');
+            } else {
+                selectEl.classList.remove('border-slate-300', 'border-emerald-500');
+                selectEl.classList.add('border-red-400', 'bg-red-50', 'text-red-800');
+                feedbackEl.className = "text-xs font-semibold pl-6 text-red-600 flex items-center gap-1 mt-1";
+                feedbackEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Not quite right. Try another word or view the hint!`;
+            }
+            updateProgressCheck();
+        }
+
+        function updateProgressCheck() {
+            let count = 0;
+            // Part 1 count
+            Object.keys(matches).forEach(slot => {
+                if (matches[slot]) count++;
+            });
+            // Part 2 count
+            Object.keys(correctBlanks).forEach(blankId => {
+                const el = document.getElementById(blankId);
+                if (el && el.value) count++;
+            });
+
+            const txt = document.getElementById('progressCheckText');
+            if (txt) {
+                txt.textContent = `Completed: ${count} / 6`;
+            }
+        }
+
+        // Hook up updateProgressCheck on match changes
+        const origMatchDefinition = matchDefinition;
+        matchDefinition = function(slot) {
+            origMatchDefinition(slot);
+            updateProgressCheck();
+        };
+
+        const origClearMatch = clearMatch;
+        clearMatch = function(slot, event) {
+            origClearMatch(slot, event);
+            updateProgressCheck();
+        };
+
+        // Timer State
+        const TOTAL_SECONDS = 180; // 3 Minutes
+        let timeRemaining = TOTAL_SECONDS;
+        let timerInterval = null;
+        let isRunning = false;
+
+        // Sound Synthesis (Web Audio API - No external files)
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'select') {
+                    osc.frequency.setValueAtTime(440, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.08);
+                } else if (type === 'match') {
+                    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.2);
+                } else if (type === 'win') {
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.12);
+                    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.24);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                }
+            } catch (e) {
+                // Audio Context unavailable
+            }
+        }
+
+        // Timer Controls
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('startBtn').classList.add('hidden');
+            document.getElementById('pauseBtn').classList.remove('hidden');
+
+            timerInterval = setInterval(() => {
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                    updateTimerUI();
+                } else {
+                    pauseTimer();
+                    checkAnswers(true); // Auto submit when time runs out
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').classList.remove('hidden');
+            document.getElementById('pauseBtn').classList.add('hidden');
+        }
+
+        function updateTimerUI() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            const timerEl = document.getElementById('timerDisplay');
+            timerEl.textContent = formatted;
+
+            // Update Progress bar width
+            const pct = (timeRemaining / TOTAL_SECONDS) * 100;
+            const progressEl = document.getElementById('timerProgress');
+            progressEl.style.width = `${pct}%`;
+
+            if (timeRemaining <= 30) {
+                timerEl.classList.add('urgent-timer');
+                progressEl.classList.remove('bg-indigo-600');
+                progressEl.classList.add('bg-red-500');
+            } else {
+                timerEl.classList.remove('urgent-timer');
+                progressEl.classList.remove('bg-red-500');
+                progressEl.classList.add('bg-indigo-600');
+            }
+        }
+
+        // Word Selection for Part 1
+        function selectWord(word) {
+            // Check if word is already matched elsewhere
+            const currentSlot = Object.keys(matches).find(slot => matches[slot] === word);
+            if (currentSlot) {
+                clearMatch(currentSlot);
+            }
+
+            // Deselect previous word
+            if (selectedWord) {
+                const prevEl = document.getElementById(`word-${selectedWord}`);
+                if (prevEl) prevEl.classList.remove('ring-4', 'ring-indigo-400', 'bg-indigo-200');
+            }
+
+            if (selectedWord === word) {
+                selectedWord = null; // Toggle off
+            } else {
+                selectedWord = word;
+                const newEl = document.getElementById(`word-${word}`);
+                if (newEl) newEl.classList.add('ring-4', 'ring-indigo-400', 'bg-indigo-200');
+                playSound('select');
+            }
+
+            // Start timer automatically on first click if not running
+            if (!isRunning && timeRemaining === TOTAL_SECONDS) {
+                startTimer();
+            }
+        }
+
+        function matchDefinition(slot) {
+            if (!selectedWord) return;
+
+            // If slot already has word, release it
+            if (matches[slot]) {
+                const oldWord = matches[slot];
+                const oldEl = document.getElementById(`word-${oldWord}`);
+                if (oldEl) {
+                    oldEl.classList.remove('opacity-40', 'pointer-events-none');
+                    document.getElementById(`icon-${oldWord}`).className = "fa-regular fa-circle text-indigo-400";
+                }
+            }
+
+            // Assign word to slot
+            matches[slot] = selectedWord;
+            const wordEl = document.getElementById(`word-${selectedWord}`);
+            wordEl.classList.add('opacity-40');
+            wordEl.classList.remove('ring-4', 'ring-indigo-400', 'bg-indigo-200');
+            document.getElementById(`icon-${selectedWord}`).className = "fa-solid fa-circle-check text-indigo-600";
+
+            // Update Definition slot UI
+            const slotEl = document.getElementById(`slot-${slot}`);
+            slotEl.querySelector('.slot-word').textContent = selectedWord.toUpperCase();
+            slotEl.classList.remove('hidden');
+
+            playSound('match');
+            selectedWord = null;
+        }
+
+        function clearMatch(slot, event) {
+            if (event) event.stopPropagation();
+            const word = matches[slot];
+            if (!word) return;
+
+            matches[slot] = null;
+            const wordEl = document.getElementById(`word-${word}`);
+            if (wordEl) {
+                wordEl.classList.remove('opacity-40');
+                document.getElementById(`icon-${word}`).className = "fa-regular fa-circle text-indigo-400";
+            }
+
+            const slotEl = document.getElementById(`slot-${slot}`);
+            slotEl.classList.add('hidden');
+        }
+
+        // Answer Checking & Grading
+        function checkAnswers(autoSubmitted = false) {
+            pauseTimer();
+
+            let matchingScore = 0;
+            let contextScore = 0;
+
+            // Grade Part 1 Matching
+            Object.keys(correctMatches).forEach(slot => {
+                const card = document.getElementById(`def-${slot}`);
+                if (matches[slot] === correctMatches[slot]) {
+                    matchingScore++;
+                    card.classList.remove('border-slate-200', 'border-red-300');
+                    card.classList.add('border-emerald-400', 'bg-emerald-50/50');
+                } else {
+                    card.classList.remove('border-slate-200', 'border-emerald-400');
+                    card.classList.add('border-red-300', 'bg-red-50/50');
+                }
+            });
+
+            // Grade Part 2 Fill-in-the-Blank
+            Object.keys(correctBlanks).forEach((blankId, idx) => {
+                const selectEl = document.getElementById(blankId);
+                const feedbackEl = document.getElementById(`feedback-${idx + 1}`);
+                feedbackEl.classList.remove('hidden');
+
+                if (selectEl.value === correctBlanks[blankId]) {
+                    contextScore++;
+                    selectEl.classList.remove('border-slate-300', 'border-red-400');
+                    selectEl.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-800');
+                    feedbackEl.className = "text-xs font-semibold pl-6 text-emerald-600 flex items-center gap-1 mt-1";
+                    feedbackEl.innerHTML = `<i class="fa-solid fa-check"></i> Correct!`;
+                } else {
+                    selectEl.classList.remove('border-slate-300', 'border-emerald-500');
+                    selectEl.classList.add('border-red-400', 'bg-red-50', 'text-red-800');
+                    feedbackEl.className = "text-xs font-semibold pl-6 text-red-600 flex items-center gap-1 mt-1";
+                    feedbackEl.innerHTML = `<i class="fa-solid fa-xmark"></i> Correct answer: <strong>${correctBlanks[blankId]}</strong>`;
+                }
+            });
+
+            // Calculate total score
+            const totalScore = matchingScore + contextScore;
+            const timeSpentSecs = TOTAL_SECONDS - timeRemaining;
+            const spentMin = Math.floor(timeSpentSecs / 60);
+            const spentSec = timeSpentSecs % 60;
+            const timeFormatted = `${String(spentMin).padStart(2, '0')}:${String(spentSec).padStart(2, '0')}`;
+
+            // Populate Modal
+            document.getElementById('scoreBadge').textContent = `${totalScore}/6`;
+            document.getElementById('matchingScore').textContent = `${matchingScore} / 3`;
+            document.getElementById('contextScore').textContent = `${contextScore} / 3`;
+            document.getElementById('timeTakenText').textContent = timeFormatted;
+
+            const titleEl = document.getElementById('resultTitle');
+            if (totalScore === 6) {
+                titleEl.textContent = "Perfect Score! 🎉";
+                playSound('win');
+            } else if (totalScore >= 4) {
+                titleEl.textContent = "Good Job! 👍";
+            } else {
+                titleEl.textContent = "Keep Practicing! 📚";
+            }
+
+            if (autoSubmitted) {
+                document.getElementById('resultSubtitle').textContent = "Time's up! Here is how you did:";
+            }
+
+            document.getElementById('resultsModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('resultsModal').classList.add('hidden');
+        }
+
+        function resetActivity() {
+            pauseTimer();
+            timeRemaining = TOTAL_SECONDS;
+            updateTimerUI();
+
+            // Clear matches
+            selectedWord = null;
+            Object.keys(matches).forEach(slot => {
+                clearMatch(slot);
+                const card = document.getElementById(`def-${slot}`);
+                card.className = "def-card border-2 border-slate-200 hover:border-indigo-300 bg-slate-50/70 p-4 rounded-xl cursor-pointer transition flex items-start gap-3 select-none";
+            });
+
+            // Clear blanks
+            Object.keys(correctBlanks).forEach((blankId, idx) => {
+                const selectEl = document.getElementById(blankId);
+                selectEl.value = "";
+                selectEl.className = "mx-1 bg-white border-2 border-slate-300 focus:border-indigo-500 focus:ring-0 rounded-lg px-3 py-1 font-semibold text-indigo-700 transition outline-none cursor-pointer";
+                const feedbackEl = document.getElementById(`feedback-${idx + 1}`);
+                feedbackEl.classList.add('hidden');
+            });
+        }
+
+        function toggleTeacherKey() {
+            const keyBox = document.getElementById('teacherKeyBox');
+            const btnText = document.getElementById('keyBtnText');
+            if (keyBox.classList.contains('hidden')) {
+                keyBox.classList.remove('hidden');
+                btnText.textContent = "Hide Teacher Key";
+            } else {
+                keyBox.classList.add('hidden');
+                btnText.textContent = "Teacher Key";
+            }
+        }
+
+        // Auto-start timer on blank select
+        document.querySelectorAll('select').forEach(sel => {
+            sel.addEventListener('change', () => {
+                if (!isRunning && timeRemaining === TOTAL_SECONDS) {
+                    startTimer();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+        const TEACHER_PIN = "1234"; // Default PIN for Teacher Mode
+        let isTeacherUnlocked = false;
+
+        function promptTeacherKey() {
+            if (isTeacherUnlocked) {
+                toggleTeacherKey();
+                return;
+            }
+            const enteredPin = prompt("Enter Teacher PIN to unlock answer key:\n(Default: 1234)");
+            if (enteredPin === TEACHER_PIN) {
+                isTeacherUnlocked = true;
+                document.getElementById('keyBtnText').textContent = "Teacher Key";
+                toggleTeacherKey();
+            } else if (enteredPin !== null) {
+                alert("Incorrect PIN. Access restricted to teacher.");
+            }
+        }
+
+        function toggleTeacherKey() {
+            const keyBox = document.getElementById('teacherKeyBox');
+            if (keyBox.classList.contains('hidden')) {
+                keyBox.classList.remove('hidden');
+            } else {
+                keyBox.classList.add('hidden');
+            }
+        }
+
+        // Answer Checking & Grading
+        function checkAnswers(autoSubmitted = false) {
+            pauseTimer();
+
+            let matchingScore = 0;
+            let contextScore = 0;
+
+            // Display student name tag if provided
+            const nameVal = document.getElementById('studentName').value.trim();
+            const periodVal = document.getElementById('classPeriod').value.trim();
+            const displayTag = document.getElementById('studentDisplayTag');
+            if (nameVal) {
+                displayTag.textContent = `Student: ${nameVal} ${periodVal ? '(' + periodVal + ')' : ''}`;
+            } else {
+                displayTag.textContent = '';
+            }
+
+            // Grade Part 1 Matching
+            Object.keys(correctMatches).forEach(slot => {
+                const card = document.getElementById(`def-${slot}`);
+                if (matches[slot] === correctMatches[slot]) {
+                    matchingScore++;
+                    card.classList.remove('border-slate-200', 'border-red-300');
+                    card.classList.add('border-emerald-400', 'bg-emerald-50/50');
+                } else {
+                    card.classList.remove('border-slate-200', 'border-emerald-400');
+                    card.classList.add('border-red-300', 'bg-red-50/50');
+                }
+            });
+
+            // Grade Part 2 Fill-in-the-Blank
+            Object.keys(correctBlanks).forEach((blankId, idx) => {
+                const selectEl = document.getElementById(blankId);
+                const feedbackEl = document.getElementById(`feedback-${idx + 1}`);
+                feedbackEl.classList.remove('hidden');
+
+                if (selectEl.value === correctBlanks[blankId]) {
+                    contextScore++;
+                    selectEl.classList.remove('border-slate-300', 'border-red-400');
+                    selectEl.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-800');
+                    feedbackEl.className = "text-xs font-semibold pl-6 text-emerald-600 flex items-center gap-1 mt-1";
+                    feedbackEl.innerHTML = `<i class="fa-solid fa-check"></i> Correct!`;
+                } else {
+                    selectEl.classList.remove('border-slate-300', 'border-emerald-500');
+                    selectEl.classList.add('border-red-400', 'bg-red-50', 'text-red-800');
+                    feedbackEl.className = "text-xs font-semibold pl-6 text-red-600 flex items-center gap-1 mt-1";
+                    feedbackEl.innerHTML = `<i class="fa-solid fa-xmark"></i> Correct answer: <strong>${correctBlanks[blankId]}</strong>`;
+                }
+            });
+
+            // Calculate total score
+            const totalScore = matchingScore + contextScore;
+            const timeSpentSecs = TOTAL_SECONDS - timeRemaining;
+            const spentMin = Math.floor(timeSpentSecs / 60);
+            const spentSec = timeSpentSecs % 60;
+            const timeFormatted = `${String(spentMin).padStart(2, '0')}:${String(spentSec).padStart(2, '0')}`;
+
+            // Populate Modal
+            document.getElementById('scoreBadge').textContent = `${totalScore}/6`;
+            document.getElementById('matchingScore').textContent = `${matchingScore} / 3`;
+            document.getElementById('contextScore').textContent = `${contextScore} / 3`;
+            document.getElementById('timeTakenText').textContent = timeFormatted;
+
+            const titleEl = document.getElementById('resultTitle');
+            if (totalScore === 6) {
+                titleEl.textContent = "Perfect Score! 🎉";
+                playSound('win');
+            } else if (totalScore >= 4) {
+                titleEl.textContent = "Good Job! 👍";
+            } else {
+                titleEl.textContent = "Keep Practicing! 📚";
+            }
+
+            if (autoSubmitted) {
+                document.getElementById('resultSubtitle').textContent = "Time's up! Here is how you did:";
+            }
+
+            document.getElementById('resultsModal').classList.remove('hidden');
+        }
+
+        // Auto-start timer on blank select
+        document.querySelectorAll('select').forEach(sel => {
+            sel.addEventListener('change', () => {
+                if (!isRunning && timeRemaining === TOTAL_SECONDS) {
+                    startTimer();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
